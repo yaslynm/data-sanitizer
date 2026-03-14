@@ -1,5 +1,6 @@
 #
 # Lambda function to process a text file and detect sensitive information.
+# Uploads the original file to S3.
 #
 # The text file is passed to the function in the body of the request, in
 # JSON format:

@@ -37,6 +37,11 @@ print("**get_ping**")
 M = data_sanitizer.get_ping()
 print(f"M: {M}")
 
+print("**post_file:")
+filename = "test.txt"
+done = data_sanitizer.post_file(filename)
+print(f"uploaded {filename}")
+
 print()
 print("**Done**")
 print()
