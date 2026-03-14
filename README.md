@@ -4,11 +4,14 @@ This repository contains a data sanitization workflow for detecting and redactin
 
 ## Frontend (NiceGUI)
 
-The frontend is implemented in `client/nicegui_app.py` and focuses on:
+The frontend is implemented in `client/results_viewer_app.py`.
 
-- Uploading or pasting document text
-- Calling backend APIs for detection and sanitization
-- Presenting findings and report details in a user-friendly interface
+This is a single-page results viewer that calls deployed API Gateway endpoints (no AWS credentials used in the GUI).
+
+- Enter a processed filename (example: `ancestor.txt`)
+- Click `Get Results`
+- Calls `GET /report` and `GET /download`
+- Displays risk level, total findings, counts by type, sanitized text, and a download link
 
 ### Run Frontend Locally
 
@@ -21,7 +24,13 @@ pip install -r client/requirements.txt
 2. Start the frontend:
 
 ```bash
-python client/nicegui_app.py
+python client/results_viewer_app.py
+```
+
+If your terminal is currently inside `lambda/`, run:
+
+```bash
+python ../client/results_viewer_app.py
 ```
 
 3. Open the app in your browser:
@@ -32,20 +41,22 @@ http://localhost:8080
 
 ### Backend API Contract Used by Frontend
 
-The frontend expects a backend endpoint:
+The frontend uses this API base URL:
 
-- `POST /process`
+- `https://riwzsm6apd.execute-api.us-east-2.amazonaws.com/prod`
 
-Request body fields:
+Endpoints used:
 
-- `file_name`: original file name
-- `file_content_base64`: UTF-8 text encoded in base64
+- `GET /report?filename=<filename>`
+- `GET /download?filename=<filename>`
 
-Response fields used by frontend:
+`GET /report` example response fields shown in UI:
 
-- `request_id`
+- `risk_level`
+- `total_findings`
+- `findings_by_type`
 - `sanitized_text`
-- `detections` (or `findings`)
-- `report`
 
-You can change the backend base URL directly in the frontend UI.
+`GET /download` example response fields shown in UI:
+
+- `download_url`
