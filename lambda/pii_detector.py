@@ -38,3 +38,5 @@ def detect_pii(text):
 
     findings.sort(key=lambda x: x["start"])
     return findings
+
+    #findings return structure: [{'type': 'email', 'start': 12, 'end': 27}, {'type': 'phone', 'start': 36, 'end': 48}, {'type': 'ssn', 'start': 60, 'end': 71}, {'type': 'credit card', 'start': 84, 'end': 103}]
