@@ -1,83 +1,125 @@
 #
-# Lambda function to process a text file and detect sensitive information.
-# Uploads the original file to S3.
+# Lambda function to process an uploaded text file from S3 and detect
+# sensitive information.
 #
-# The text file is passed to the function in the body of the request, in
-# JSON format:
+# Trigger:
+# This function is triggered automatically when a text file is uploaded
+# to the `uploads/` folder in the S3 bucket.
 #
-#  {
-#    "name": "example.txt",
-#    "content": "My email is user@example.com and my # is 999-999-9999"
-#  }
+# Input:
+# The Lambda receives an S3 event notification containing:
+# - bucket name
+# - object key
 #
-# The function scans the content for personally identifiable information
-# (PII) including email addresses, phone numbers, SSNs, and credit card
-# numbers using detect_pii() from pii_detector.py.
-
-# The response is an object in JSON format, with status code of 
-# 200 (success) or 500 (server-side error). The data contains
-# the detected findings with their positions in the text.
-#
-# Example response format:
-#
-#     { 
-#       "message": "success",
-#       "data": [
-#                 { "type": "email", "start": 12, "end": 27 },
-#                 { "type": "phone", "start": 41, "end": 52 }
-#               ]
+# Example S3 event structure:
+# {
+#   "Records": [
+#     {
+#       "s3": {
+#         "bucket": { "name": "data-sanitizer-app" },
+#         "object": { "key": "uploads/example.txt" }
+#       }
 #     }
+#   ]
+# }
 #
+# Processing steps:
+# 1. Read uploaded file from S3
+# 2. Detect PII using detect_pii() from pii_detector.py
+# 3. Sanitize detected values with placeholder replacements
+# 4. Generate a report using generate_report() from report_generator.py
+# 5. Save the sanitized file to `sanitized/`
+# 6. Save the report JSON to `reports/`
+#
+# Outputs:
+# - sanitized/<filename>
+# - reports/<filename>.json
+#
+# Response:
+# Returns a JSON response with status code 200 on success or 500 on error.
 #
 
 import json
-import uuid
+import boto3
+import urllib.parse
 from pii_detector import detect_pii
+from report_generator import generate_report
+
+s3 = boto3.client("s3")
+
+
+def sanitize_text(text, findings):
+    # replace from back to front so indexes don't shift
+    replacements = {
+        "email": "[EMAIL]",
+        "phone": "[PHONE]",
+        "ssn": "[SSN]",
+        "credit_card": "[CREDIT_CARD]"
+    }
+
+    sanitized = text
+    for item in sorted(findings, key=lambda x: x["start"], reverse=True):
+        pii_type = item["type"]
+        start = item["start"]
+        end = item["end"]
+        replacement = replacements.get(pii_type, "[REDACTED]")
+        sanitized = sanitized[:start] + replacement + sanitized[end:]
+
+    return sanitized
+
 
 def lambda_handler(event, context):
     try:
         print("**Call to process...")
+        print("EVENT:", json.dumps(event))
 
-        print("**Accessing request body...")
+        record = event["Records"][0]
+        bucket_name = record["s3"]["bucket"]["name"]
+        key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
 
-        if "body" not in event:
-            raise Exception("request has no body")
+        print("bucket_name:", bucket_name)
+        print("key:", key)
 
-        body = json.loads(event["body"])
+        response = s3.get_object(Bucket=bucket_name, Key=key)
+        content = response["Body"].read().decode("utf-8")
+        name = key.split("/")[-1]
 
-        if "name" not in body:
-            raise Exception("request has no key 'name'")
-        if "content" not in body:
-            raise Exception("request has no key 'content'")
-
-        name = body["name"]
-        content = body["content"]
-
-        print("name: ", name)
-        print("content: ", content)
-
-        # print("**Uploading file to S3...")
-        
-        # # generating a unique string for the bucketkey
-        # unique_str = str(uuid.uuid4())
-        # key = f"original/{unique_str}_{name}"
-        # bucket_name = "data-sanitizer-app"
-        # s3 = boto3.client("s3")
-        # s3.put_object(
-        #     Bucket=bucket_name,
-        #     Key=key,
-        #     Body=content.encode("utf-8")
-        # )
-
-        # print("uploaded to: ", unique_str)
-
+        print("name:", name)
+        print("content:", content)
 
         print("**Detecting sensitive data...")
-        
         findings = detect_pii(content)
+
+        print("**Sanitizing text...")
+        sanitized_text = sanitize_text(content, findings)
+
+        print("**Generating report...")
+        report = generate_report(sanitized_text, findings)
+
+        sanitized_key = f"sanitized/{name}"
+        report_key = f"reports/{name}.json"
+
+        print("**Writing sanitized file to S3...")
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=sanitized_key,
+            Body=sanitized_text.encode("utf-8"),
+            ContentType="text/plain"
+        )
+
+        print("**Writing report to S3...")
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=report_key,
+            Body=json.dumps(report, indent=2).encode("utf-8"),
+            ContentType="application/json"
+        )
 
         body = {
             "message": "success",
+            "original_file": key,
+            "sanitized_file": sanitized_key,
+            "report_file": report_key,
             "data": findings
         }
 
@@ -88,7 +130,7 @@ def lambda_handler(event, context):
 
     except Exception as e:
         print("**ERROR")
-        print("**Message: ", str(e))
+        print("**Message:", str(e))
 
         body = {
             "message": str(e),
