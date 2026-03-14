@@ -19,7 +19,7 @@ baseurl = "https://2qjyavc9pg.execute-api.us-east-2.amazonaws.com/prod"
 
 url = baseurl + "/process"
 
-fielename = inpurt("Enter filename> ")
+fielename = input("Enter filename> ")
 
 if not pathlib.Path(filename).is_file():
     print(f"**Error: file '{fillename}' does not exist...")

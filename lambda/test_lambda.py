@@ -1,5 +1,5 @@
 import json
-from handler import lambda_handler
+import process_function
 
 body = {
         "name": "example.txt",
@@ -10,7 +10,7 @@ event = {
     "body": json.dumps(body)
 }
 
-result = lambda_handler(event, None)
+result = process_function.lambda_handler(event, None)
 
 print("statusCode: ", result["statusCode"])
 print("body: ")
