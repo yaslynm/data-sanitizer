@@ -1,56 +1,75 @@
 # Data Sanitizer
 
-This repository contains a data sanitization workflow for detecting and redacting sensitive information.
+This project detects and redacts sensitive text, then serves a report through an AWS-backed API.
 
-## Frontend (NiceGUI)
+## Repository Layout
 
-The frontend is implemented in `client/results_viewer_app.py`.
-
-This is a single-page results viewer that calls deployed API Gateway endpoints (no AWS credentials used in the GUI).
-
-- Enter a processed filename (example: `ancestor.txt`)
-- Click `Get Results`
-- Calls `GET /report` and `GET /download`
-- Displays risk level, total findings, counts by type, sanitized text, and a download link
-
-### Run Frontend Locally
-
-1. Install dependencies:
-
-```bash
-pip install -r client/requirements.txt
+```text
+data-sanitizer/
+	README.md
+	client/
+		client.py
+	lambda/
+		pii_detector.py
+		process_function.py
+		report_generator.py
+	sample_data/
+		sample1.txt
+		sample2.txt
 ```
 
-2. Start the frontend:
+## Frontend
+
+The frontend lives in `client/client.py` (NiceGUI).
+
+It supports two flows:
+1. Upload a `.txt` file and process it.
+2. Look up results for an already-processed filename.
+
+The page displays:
+- risk level
+- total findings
+- findings by type
+- sanitized text
+- download link for the sanitized file
+
+### Run the Frontend Locally
+
+Install dependencies:
 
 ```bash
-python client/results_viewer_app.py
+pip install nicegui requests
 ```
 
-3. Open the app in your browser:
+Run:
+
+```bash
+python client/client.py
+```
+
+Open:
 
 ```text
 http://localhost:8080
 ```
 
-### Backend API Contract Used by Frontend
+## Backend Integration
 
-The frontend uses this API base URL:
+Frontend API base URL:
 
 - `https://riwzsm6apd.execute-api.us-east-2.amazonaws.com/prod`
 
-Endpoints used:
+Endpoints used by the frontend:
 
+- `POST /upload-url`
 - `GET /report?filename=<filename>`
 - `GET /download?filename=<filename>`
 
-`GET /report` example response fields shown in UI:
+Expected response fields:
 
-- `risk_level`
-- `total_findings`
-- `findings_by_type`
-- `sanitized_text`
+- `/report`: `risk_level`, `total_findings`, `findings_by_type`, `sanitized_text`
+- `/download`: `download_url`
 
-`GET /download` example response fields shown in UI:
+## Sample Input Files
 
-- `download_url`
+Use `sample_data/sample1.txt` and `sample_data/sample2.txt` for local testing.
