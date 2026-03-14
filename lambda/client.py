@@ -15,7 +15,7 @@ import pathlib
 
 sys.tracebacklimit = 0
 
-baseurl = ""
+baseurl = "https://2qjyavc9pg.execute-api.us-east-2.amazonaws.com/prod"
 
 url = baseurl + "/process"
 
