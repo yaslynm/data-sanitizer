@@ -1,3 +1,27 @@
+"""
+Basic NiceGUI frontend for the data sanitizer backend.
+
+What this page does:
+- Upload a .txt file, send it to S3 via a presigned URL, then auto-load the report.
+- Or, type a filename and load an existing report.
+
+Backend endpoints used:
+- POST /upload-url
+- GET /report?filename=...
+- GET /download?filename=...
+
+Notes for future edits:
+- The request helpers use `requests`, so async handlers run them with `run.io_bound(...)`.
+- Keep UI creation inside `@ui.page('/')` to avoid NiceGUI slot/context errors.
+- The results card starts hidden and is shown only after successful fetch.
+
+Authors:
+  Kai'lyn Mohammed
+  Reem Khalid
+  Yas'lyn Mohammed
+
+"""
+
 import asyncio
 
 import requests
