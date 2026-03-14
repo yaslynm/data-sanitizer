@@ -25,7 +25,7 @@ if not pathlib.Path(filename).is_file():
     print(f"**Error: file '{fillename}' does not exist...")
     sys.exit(0)
 
-with open(filaename, "rb") as infile:
+with open(filename, "rb") as infile:
     text = infile.read()
 
 data = {
