@@ -46,8 +46,9 @@
 #
 #
 
+import json
 from pii_detector import detect_pii
-from sanitizer import sanitized_text
+from sanitizer import sanitize_text
 from report_generator import generate_report
 
 def lambda_handler(event, context):
@@ -70,7 +71,7 @@ def lambda_handler(event, context):
         content = body["content"]
 
         print("name: ", name)
-        print("content: ", text)
+        print("content: ", content)
 
         print("**Detecting sensitive data...")
         
@@ -84,7 +85,7 @@ def lambda_handler(event, context):
         }
 
         return {
-            "statusCode:" 200,
+            "statusCode": 200,
             "body": json.dumps(body)
         }
 
