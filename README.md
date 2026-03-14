@@ -27,12 +27,6 @@ pip install -r client/requirements.txt
 python client/results_viewer_app.py
 ```
 
-If your terminal is currently inside `lambda/`, run:
-
-```bash
-python ../client/results_viewer_app.py
-```
-
 3. Open the app in your browser:
 
 ```text
