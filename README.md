@@ -1,75 +1,94 @@
 # Data Sanitizer
 
-This project detects and redacts sensitive text, then serves a report through an AWS-backed API.
+This project detects PII in uploaded text files, creates a sanitized version, and returns a report through an AWS API.
 
 ## Repository Layout
 
 ```text
 data-sanitizer/
-	README.md
-	client/
+  README.md
+  client/
 		client.py
-	lambda/
-		pii_detector.py
+  lambda/
+		getUploadURL.py
+		getReport.py
+		getDownloadLink.py
 		process_function.py
+		pii_detector.py
 		report_generator.py
-	sample_data/
-		sample1.txt
-		sample2.txt
 ```
 
-## Frontend
+## What Runs Where
 
-The frontend lives in `client/client.py` (NiceGUI).
+- Client: `client/client.py` (NiceGUI, local web app)
+- Server: AWS (Lambda + S3 + API Gateway)
 
-It supports two flows:
-1. Upload a `.txt` file and process it.
-2. Look up results for an already-processed filename.
+## Prerequisites
 
-The page displays:
-- risk level
-- total findings
-- findings by type
-- sanitized text
-- download link for the sanitized file
+- Python 3.10+
+- pip
+- AWS account with access to Lambda, S3, API Gateway, and IAM
 
-### Run the Frontend Locally
+## Install (Local)
 
-Install dependencies:
+From repo root:
 
 ```bash
-pip install nicegui requests
+pip install nicegui requests boto3
 ```
 
-Run:
+## Server Setup (AWS)
+
+1. Create an S3 bucket.
+2. Use these key prefixes:
+	- `uploads/`
+	- `sanitized/`
+	- `reports/`
+3. Deploy Lambda functions:
+	- `lambda/process_function.py` (S3 trigger for uploads)
+	- `lambda/getUploadURL.py` (API: presigned upload URL)
+	- `lambda/getReport.py` (API: read report JSON)
+	- `lambda/getDownloadLink.py` (API: presigned download URL)
+4. Package helper modules with processing Lambda:
+	- `lambda/pii_detector.py`
+	- `lambda/report_generator.py`
+5. Give Lambda IAM permissions for S3 read/write.
+6. Add an S3 trigger to `process_function` for object-created events in `uploads/`.
+7. Configure API Gateway endpoint integrations:
+	- `POST /upload-url` -> `getUploadURL`
+	- `GET /report` -> `getReport`
+	- `GET /download` -> `getDownloadLink`
+8. Deploy API Gateway and copy the base URL.
+
+## Client Setup + Run
+
+1. Open `client/client.py` and verify `API_BASE_URL` points to your deployed API.
+2. Start the app:
 
 ```bash
 python client/client.py
 ```
 
-Open:
+3. Open:
 
 ```text
 http://localhost:8080
 ```
 
-## Backend Integration
+## How to Use
 
-Frontend API base URL:
+1. Upload flow:
+	- Choose a `.txt` file.
+	- Click `Upload & Process`.
+	- App uploads to S3, waits for processing, then auto-loads report.
+2. Lookup flow:
+	- Enter a processed filename.
+	- Click `Get Results`.
 
-- `https://riwzsm6apd.execute-api.us-east-2.amazonaws.com/prod`
+The UI displays:
+- risk level
+- total findings
+- findings by type
+- sanitized text
+- download URL for sanitized output
 
-Endpoints used by the frontend:
-
-- `POST /upload-url`
-- `GET /report?filename=<filename>`
-- `GET /download?filename=<filename>`
-
-Expected response fields:
-
-- `/report`: `risk_level`, `total_findings`, `findings_by_type`, `sanitized_text`
-- `/download`: `download_url`
-
-## Sample Input Files
-
-Use `sample_data/sample1.txt` and `sample_data/sample2.txt` for local testing.
