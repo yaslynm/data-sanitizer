@@ -32,7 +32,6 @@
 
 import json
 import uuid
-import boto3
 from pii_detector import detect_pii
 
 def lambda_handler(event, context):
@@ -57,20 +56,20 @@ def lambda_handler(event, context):
         print("name: ", name)
         print("content: ", content)
 
-        print("**Uploading file to S3...")
+        # print("**Uploading file to S3...")
         
-        # generating a unique string for the bucketkey
-        unique_str = str(uuid.uuid4())
-        key = f"original/{unique_str}_{name}"
-        bucket_name = "data-sanitizer-app"
-        s3 = boto3.client("s3")
-        s3.put_object(
-            Bucket=bucket_name,
-            Key=key,
-            Body=content.encode("utf-8")
-        )
+        # # generating a unique string for the bucketkey
+        # unique_str = str(uuid.uuid4())
+        # key = f"original/{unique_str}_{name}"
+        # bucket_name = "data-sanitizer-app"
+        # s3 = boto3.client("s3")
+        # s3.put_object(
+        #     Bucket=bucket_name,
+        #     Key=key,
+        #     Body=content.encode("utf-8")
+        # )
 
-        print("uploaded to: ", unique_str)
+        # print("uploaded to: ", unique_str)
 
 
         print("**Detecting sensitive data...")
