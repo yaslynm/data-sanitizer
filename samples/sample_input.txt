@@ -1,0 +1,13 @@
+Hello,
+
+My name is Alex Johnson.
+
+Email: alex.johnson@example.com
+Phone: 312-555-8472
+SSN: 123-45-6789
+Credit Card: 4111 1111 1111 1111
+
+Please contact me soon.
+
+Thanks,
+Alex
